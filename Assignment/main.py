@@ -36,19 +36,16 @@ def add_new_product(item_id: str):
     db = client.WebService
     collection = db.Col
     newRecord= {"Product Id": 101, "Name": "starter", "UnitPrice": 200, "StockQuantity": 30, "Description": "High-quality Starter"}	
-    newRecord= {"Product Id": 102, "Name": "start", "UnitPrice": 300, "StockQuantity": 40, "Description": "High-quality Start"}
     res = collection.insert_one(newRecord)
     return {"status":"inserted"}
-
 
 @app.get("/deleteOne/{item_id}")
 def add_new_product(item_id: str):
     MONGO_URI = "mongodb+srv://root2:root2@cluster10.kk12w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster10"
     client = MongoClient(MONGO_URI)
     db = client.WebService
-    collection = db.Col
-    deleteRecord= {"Product Id": 101, "Name": "starter", "UnitPrice": 200, "StockQuantity": 30, "Description": "High-quality Starter"}	
-    res = collection.delete_one(deleteRecord)
+    collection = db.Col	
+    res = collection.delete_one({"Product Id": int(item_id)})
     return {"status":"deleted"}
 
 @app.get("/startWith/{letter}")
@@ -57,7 +54,7 @@ def get_products_starting_with(letter: str):
     client = MongoClient(MONGO_URI)
     db = client.WebService
     collection = db.Col
-    return json.loads(dumps(collection.find({"name": {"$regex": letter, "$options": "i"}})))
+    return json.loads(dumps(collection.find({"Name": {"$regex": letter, "$options": "i"}})))
 
 @app.get("/convert/{item_id}")
 def convert_price_to_eur(item_id: str):
@@ -66,17 +63,23 @@ def convert_price_to_eur(item_id: str):
     db = client.WebService
     collection = db.Col
     product = collection.find_one({"Product ID": item_id})
-    unit_price = product.get("Unit Price")
+    unit_price = float(product.get("Unit Price", 0))
     url = 'https://currency-converter5.p.rapidapi.com/currency/convert?format=json&from=USD&to=EUR&amount=1&language=en'
     headers = {
         'x-rapidapi-key': '65a84db33cmshf211b6817ea17d8p191775jsn3b3820a40528',
-		'x-rapidapi-host': 'currency-converter5.p.rapidapi.com'
+        'x-rapidapi-host': 'currency-converter5.p.rapidapi.com'
     }
     response = requests.get(url, headers=headers)
     exchange_data = response.json()
-    exchange_rate = exchange_data.get('response', {}).get('conversion_rate')
-    if not exchange_rate:
-        return {"error": "EUR conversion rate not available"}
-    eur_price = unit_price * exchange_rate
-    return {"product_id": item_id, "usd_price": unit_price, "eur_price": eur_price}
+    exchange_rate = exchange_data.get("conversion_rate") 
+    if exchange_rate is None:
+        exchange_rate = exchange_data.get("rates", {}).get("EUR", {}).get("rate")
+    eur_price = round(unit_price * float(exchange_rate), 2)
+    return {
+        "product_id": item_id,
+        "usd_price": unit_price,
+        "eur_price": eur_price
+    }
+
+
 

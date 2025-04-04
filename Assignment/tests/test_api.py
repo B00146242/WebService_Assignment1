@@ -19,13 +19,13 @@ class ApiTest(unittest.TestCase):
     def test_sample_endpoint3(self):
         item_id = 2  
         url = f'http://localhost:8000/addNew/{item_id}' 
-        response = requests.get(url)  
+        response = requests.post(url)  
         self.assertEqual(response.status_code, 200)  
     
     def test_sample_endpoint4(self):
         item_id = 1  
         url = f'http://localhost:8000/deleteOne/{item_id}'  
-        response = requests.get(url) 
+        response = requests.delete(url) 
         self.assertEqual(response.status_code, 200)  
 
     def test_sample_endpoint5(self):
@@ -39,7 +39,7 @@ class ApiTest(unittest.TestCase):
         url = f'http://localhost:8000/convert/{item_id}'  
         response = requests.get(url)  
         self.assertEqual(response.status_code, 200)
-
+        
 def run_tests():
     suite = unittest.TestLoader().loadTestsFromTestCase(ApiTest)
     result_stream = StringIO()
@@ -59,5 +59,3 @@ def generate_pdf(test_results):
 
 test_results = run_tests()
 generate_pdf(test_results)
-
-
